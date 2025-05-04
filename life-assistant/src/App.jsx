@@ -1,22 +1,61 @@
-import { useEffect } from "react";
-import { database } from "../firebaseResources/config";
-import { doc, setDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { useDecentralizedIdentity } from "./hooks/useDecentralizedIdentity";
+import { createUser, getUser } from "./firebaseResources/store";
 
 function App() {
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [authField, setAuthField] = useState("");
+
+  const { nostrPubKey, generateNostrKeys, auth, errorMessage } =
+    useDecentralizedIdentity(
+      localStorage.getItem("local_npub"),
+      localStorage.getItem("local_nsec")
+    );
+
   useEffect(() => {
-    const writeTestUser = async () => {
-      try {
-        // Create (or overwrite) document "test" in collection "user"
-        await setDoc(doc(database, "user", "test"), { name: "dog" });
-        console.log("✅ test user written");
-      } catch (err) {
-        console.error("❌ error writing test user:", err);
+    const retrieveUser = async () => {
+      let user = await getUser(nostrPubKey);
+      console.log("user", user);
+
+      if (user) {
+        setIsSignedIn(true);
+      } else {
+        if (authField.includes("nsec")) {
+          createUser(nostrPubKey, "");
+        } else if (authField.length > 0) {
+          createUser(nostrPubKey, authField);
+        } else {
+          createUser(nostrPubKey, "");
+        }
       }
     };
-    writeTestUser();
-  }, []);
 
-  return <>Life Assistant</>;
+    if (nostrPubKey) {
+      retrieveUser();
+    }
+  }, [nostrPubKey]);
+
+  return (
+    <main>
+      <h2>Life Assistant</h2>
+
+      <label>Enter a username or secret key</label>
+      <input
+        type="text"
+        onChange={(event) => setAuthField(event.target.value)}
+      />
+
+      <div>
+        <button onClick={() => generateNostrKeys(authField)}>
+          Create Account
+        </button>
+        <button onClick={() => auth(authField)}>Sign in with secret key</button>
+      </div>
+
+      <div>{nostrPubKey ? `Welcome, ${nostrPubKey.substr(0, 8)}` : null}</div>
+      <div>{errorMessage}</div>
+    </main>
+  );
 }
-
+``;
 export default App;

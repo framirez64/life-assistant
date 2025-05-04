@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@nostr-dev-kit/ndk": "^2.14.9",
+    "bech32": "^2.0.0",
+    "buffer": "^6.0.3",
     "firebase": "^11.6.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
