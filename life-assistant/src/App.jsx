@@ -1,6 +1,18 @@
 import { useEffect, useState } from "react";
+import {
+  Box,
+  VStack,
+  Stack,
+  Heading,
+  FormControl,
+  FormLabel,
+  Input,
+  Button,
+  Text,
+} from "@chakra-ui/react";
 import { useDecentralizedIdentity } from "./hooks/useDecentralizedIdentity";
 import { createUser, getUser } from "./firebaseResources/store";
+import { ColorModeSwitcher } from "./components/ColorModeSwitcher";
 
 function App() {
   const [isSignedIn, setIsSignedIn] = useState(false);
@@ -14,48 +26,66 @@ function App() {
 
   useEffect(() => {
     const retrieveUser = async () => {
-      let user = await getUser(nostrPubKey);
+      const user = await getUser(nostrPubKey);
       console.log("user", user);
 
       if (user) {
         setIsSignedIn(true);
       } else {
-        if (authField.includes("nsec")) {
-          createUser(nostrPubKey, "");
-        } else if (authField.length > 0) {
-          createUser(nostrPubKey, authField);
-        } else {
-          createUser(nostrPubKey, "");
-        }
+        // Create new user with either secret key or blank name
+        createUser(nostrPubKey, authField.includes("nsec") ? "" : authField);
       }
     };
 
     if (nostrPubKey) {
       retrieveUser();
     }
-  }, [nostrPubKey]);
+  }, [nostrPubKey, authField]);
 
   return (
-    <main>
-      <h2>Life Assistant</h2>
+    <Box as="main" p={4} maxW="md" mx="auto">
+      <Stack direction="row" justify="end" mb={4}>
+        <ColorModeSwitcher />
+      </Stack>
 
-      <label>Enter a username or secret key</label>
-      <input
-        type="text"
-        onChange={(event) => setAuthField(event.target.value)}
-      />
+      <VStack spacing={6} align="stretch">
+        <Heading as="h2" size="lg" textAlign="center">
+          Life Assistant
+        </Heading>
 
-      <div>
-        <button onClick={() => generateNostrKeys(authField)}>
-          Create Account
-        </button>
-        <button onClick={() => auth(authField)}>Sign in with secret key</button>
-      </div>
+        <FormControl>
+          <FormLabel>Enter a username or secret key</FormLabel>
+          <Input
+            value={authField}
+            onChange={(e) => setAuthField(e.target.value)}
+            placeholder="Username or Secret Key"
+          />
+        </FormControl>
 
-      <div>{nostrPubKey ? `Welcome, ${nostrPubKey.substr(0, 8)}` : null}</div>
-      <div>{errorMessage}</div>
-    </main>
+        <Stack direction={{ base: "column", sm: "row" }} spacing={4}>
+          <Button
+            colorScheme="teal"
+            onClick={() => generateNostrKeys(authField)}
+          >
+            Create Account
+          </Button>
+          <Button variant="outline" onClick={() => auth(authField)}>
+            Sign in with secret key
+          </Button>
+        </Stack>
+
+        {nostrPubKey && (
+          <Text fontSize="md">Welcome, {nostrPubKey.substring(0, 8)}</Text>
+        )}
+
+        {errorMessage && (
+          <Text color="red.500" fontSize="sm">
+            {errorMessage}
+          </Text>
+        )}
+      </VStack>
+    </Box>
   );
 }
-``;
+
 export default App;
