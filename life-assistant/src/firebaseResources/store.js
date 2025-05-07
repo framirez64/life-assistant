@@ -1,11 +1,11 @@
 // Import Firestore functions
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { database } from "./config";
 
 export const createUser = async (npub, userName) => {
-  const userDoc = doc(database, "users", npub);
+  const userDocRef = doc(database, "users", npub);
   await setDoc(
-    userDoc,
+    userDocRef,
     {
       name: userName,
       npub: npub,
@@ -25,4 +25,12 @@ export const getUser = async (npub) => {
   } else {
     return null;
   }
+};
+
+export const updateUser = async (npub, payload) => {
+  const userDocRef = doc(database, "users", npub);
+
+  await updateDoc(userDocRef, {
+    ...payload,
+  });
 };

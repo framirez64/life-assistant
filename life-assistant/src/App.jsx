@@ -1,90 +1,65 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  VStack,
-  Stack,
-  Heading,
-  FormControl,
-  FormLabel,
-  Input,
-  Button,
-  Text,
-} from "@chakra-ui/react";
-import { useDecentralizedIdentity } from "./hooks/useDecentralizedIdentity";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import { Box, Stack } from "@chakra-ui/react";
 import { createUser, getUser } from "./firebaseResources/store";
 import { ColorModeSwitcher } from "./components/ColorModeSwitcher";
+import { Onboarding } from "./components/Onboarding/Onboarding";
+import { Landing } from "./components/Landing/Landing";
+import { Assistant } from "./components/Assistant/Assistant";
+import { useDecentralizedIdentity } from "./hooks/useDecentralizedIdentity";
 
 function App() {
-  const [isSignedIn, setIsSignedIn] = useState(false);
-  const [authField, setAuthField] = useState("");
-
-  const { nostrPubKey, generateNostrKeys, auth, errorMessage } =
-    useDecentralizedIdentity(
-      localStorage.getItem("local_npub"),
-      localStorage.getItem("local_nsec")
-    );
+  const { nostrPubKey } = useDecentralizedIdentity(
+    localStorage.getItem("local_npub"),
+    localStorage.getItem("local_nsec")
+  );
+  const navigate = useNavigate();
+  const [userDocument, setUserDocument] = useState({});
 
   useEffect(() => {
-    const retrieveUser = async () => {
-      const user = await getUser(nostrPubKey);
-      console.log("user", user);
-
+    const retrieveUser = async (npub) => {
+      let user = await getUser(npub);
       if (user) {
-        setIsSignedIn(true);
-      } else {
-        // Create new user with either secret key or blank name
-        createUser(nostrPubKey, authField.includes("nsec") ? "" : authField);
+        if (user.step === "onboarding") {
+          navigate("/onboarding/" + user.onboardingStep);
+        } else {
+          navigate("/assistant");
+        }
       }
     };
-
-    if (nostrPubKey) {
-      retrieveUser();
+    console.log("running mount");
+    let npub = localStorage.getItem("local_npub");
+    if (npub) {
+      retrieveUser(npub);
+    } else {
+      navigate("/login");
     }
-  }, [nostrPubKey, authField]);
+  }, [navigate]);
 
   return (
-    <Box as="main" p={4} maxW="md" mx="auto">
+    <>
       <Stack direction="row" justify="end" mb={4}>
         <ColorModeSwitcher />
+        <Box
+          variant="ghost"
+          display="flex"
+          alignItems={"center"}
+          onClick={() => {
+            localStorage.removeItem("local_npub");
+            localStorage.removeItem("local_nsec");
+
+            navigate("/");
+          }}
+        >
+          Sign Out
+        </Box>
       </Stack>
-
-      <VStack spacing={6} align="stretch">
-        <Heading as="h2" size="lg" textAlign="center">
-          Life Assistant
-        </Heading>
-
-        <FormControl>
-          <FormLabel>Enter a username or secret key</FormLabel>
-          <Input
-            value={authField}
-            onChange={(e) => setAuthField(e.target.value)}
-            placeholder="Username or Secret Key"
-          />
-        </FormControl>
-
-        <Stack direction={{ base: "column", sm: "row" }} spacing={4}>
-          <Button
-            colorScheme="teal"
-            onClick={() => generateNostrKeys(authField)}
-          >
-            Create Account
-          </Button>
-          <Button variant="outline" onClick={() => auth(authField)}>
-            Sign in with secret key
-          </Button>
-        </Stack>
-
-        {nostrPubKey && (
-          <Text fontSize="md">Welcome, {nostrPubKey.substring(0, 8)}</Text>
-        )}
-
-        {errorMessage && (
-          <Text color="red.500" fontSize="sm">
-            {errorMessage}
-          </Text>
-        )}
-      </VStack>
-    </Box>
+      <Routes>
+        <Route path="/login" element={<Landing />}></Route>
+        <Route path="/onboarding/:step" element={<Onboarding />}></Route>
+        <Route path="/assistant" element={<Assistant />}></Route>
+      </Routes>
+    </>
   );
 }
 
