@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
-import { getVertexAI, getGenerativeModel } from "@firebase/vertexai";
+import { getVertexAI, Schema } from "@firebase/vertexai";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_PUBLIC_API_KEY,
@@ -19,9 +19,6 @@ const database = getFirestore(app);
 const analytics = getAnalytics(app);
 const vertexAI = getVertexAI(app);
 
-const model = getGenerativeModel(vertexAI, {
-  // model: "gemini-1.5-flash",
-  model: "gemini-2.0-flash",
-});
+// 3) Pass that into your model’s generationConfig:
 
-export { database, analytics, model };
+export { database, analytics, vertexAI, Schema };

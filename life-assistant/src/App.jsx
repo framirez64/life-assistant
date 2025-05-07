@@ -27,7 +27,7 @@ function App() {
         }
       }
     };
-    console.log("running mount");
+
     let npub = localStorage.getItem("local_npub");
     if (npub) {
       retrieveUser(npub);
