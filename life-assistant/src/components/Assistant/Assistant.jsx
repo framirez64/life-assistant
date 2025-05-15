@@ -206,11 +206,11 @@ Return a JSON with two keys: "bestSuggestion" (a concise strategic move for Day 
   }
 
   return (
-    <Box p={4} maxW="600px" mx="auto">
+    <Box p={4} maxW="600px" mx="auto" mt={24}>
       <Heading mb={4}>Personal Assistant</Heading>
       <Text mb={4}>Day {memories.length + 1}</Text>
       <Button onClick={runAction} isLoading={loadingAction} mb={6}>
-        Generate Next Action
+        Create Daily Plan
       </Button>
 
       {bestSuggestion && (

@@ -45,6 +45,7 @@ export const Onboarding = () => {
         [key]: inputValue,
         onboardingStep: nextStepNum,
       });
+      setInputValue("");
       navigate(`/onboarding/${nextStepNum}`);
     } else {
       // Final step: save last answer and complete onboarding
@@ -58,7 +59,7 @@ export const Onboarding = () => {
   }
 
   return (
-    <Box maxW="400px" mx="auto" mt={10} p={4}>
+    <Box maxW="400px" mx="auto" mt={24} p={4}>
       <VStack spacing={6}>
         <Text fontSize="lg" fontWeight="bold">
           {instruction}

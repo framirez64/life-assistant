@@ -53,7 +53,7 @@ export const Landing = () => {
 
   return (
     <>
-      <Box as="main" p={4} maxW="md" mx="auto">
+      <Box as="main" p={4} maxW="md" mx="auto" mt={24}>
         <VStack spacing={6} align="stretch">
           <Heading as="h2" size="lg" textAlign="center">
             Life Assistant
