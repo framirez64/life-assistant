@@ -279,11 +279,11 @@ function App() {
                         <Text fontWeight="bold">Day {m.dayNumber}</Text>
                         <Text>{m.suggestion}</Text>
                         <br />
-                        <Text fontSize="sm" fontWeight={"bolder"}>
+                        {/* <Text fontSize="sm" fontWeight={"bolder"}>
                           Meals
                         </Text>
                         <Text fontSize="sm">{m.recipes.join(", ")} </Text>
-                        <br />
+                        <br /> */}
                         {m.timestamp?.toDate && (
                           <Text fontSize="sm" color="gray.500">
                             {m.timestamp.toDate().toLocaleString()}
