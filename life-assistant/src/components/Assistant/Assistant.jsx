@@ -278,7 +278,9 @@ export const Assistant = () => {
       </HStack>
 
       {showEmotionUI ? <EmotionTracker visible={showEmotionUI} /> : null}
-      {bestSuggestion && <PlanResult bestSuggestion={bestSuggestion} />}
+      {bestSuggestion && (
+        <PlanResult bestSuggestion={bestSuggestion} memories={memories} />
+      )}
 
       {/* Sleep Cycle UI */}
       {showSleepUI && (

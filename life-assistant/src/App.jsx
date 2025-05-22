@@ -53,12 +53,6 @@ function App() {
     onOpen: onProfileOpen,
     onClose: onProfileClose,
   } = useDisclosure();
-  // Memories modal state
-  const {
-    isOpen: isMemOpen,
-    onOpen: onMemOpen,
-    onClose: onMemClose,
-  } = useDisclosure();
 
   // Profile fields
   const [profile, setProfile] = useState({
@@ -68,10 +62,6 @@ function App() {
     responsibilities: "",
   });
   const [loadingProfile, setLoadingProfile] = useState(true);
-
-  // Memories list
-  const [memories, setMemories] = useState([]);
-  const [loadingMemories, setLoadingMemories] = useState(false);
 
   // Fetch profile on mount
   useEffect(() => {
@@ -133,27 +123,10 @@ function App() {
     onProfileClose();
   };
 
-  // Load memories before opening modal
-  const handleMemoriesOpen = async () => {
-    setLoadingMemories(true);
-    try {
-      const memRef = collection(database, "users", nostrPubKey, "memories");
-      const q = query(memRef, orderBy("dayNumber"));
-      const snap = await getDocs(q);
-      setMemories(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-    } catch (err) {
-      console.error("Error loading memories:", err);
-    } finally {
-      setLoadingMemories(false);
-      onMemOpen();
-    }
-  };
-
   const showMenu = ["/onboarding", "/assistant"].some((path) =>
     location.pathname.startsWith(path)
   );
 
-  console.log("memories", memories);
   return (
     <>
       {showMenu ? (
@@ -181,9 +154,6 @@ function App() {
                   <ColorModeSwitcher />
                   <Button variant="ghost" onClick={onProfileOpen}>
                     Edit Profile
-                  </Button>
-                  <Button variant="ghost" onClick={handleMemoriesOpen}>
-                    Memories
                   </Button>
                   <Button variant="ghost" onClick={handleSignOut}>
                     Sign Out
@@ -253,50 +223,6 @@ function App() {
                 </Button>
                 <Button colorScheme="blue" onClick={handleProfileSave}>
                   Save
-                </Button>
-              </ModalFooter>
-            </ModalContent>
-          </Modal>
-
-          {/* Memories modal */}
-          <Modal
-            isOpen={isMemOpen}
-            onClose={onMemClose}
-            scrollBehavior="inside"
-            blockScrollOnMount
-          >
-            <ModalOverlay />
-            <ModalContent>
-              <ModalHeader>Memories Ledger</ModalHeader>
-              <ModalCloseButton />
-              <ModalBody>
-                {loadingMemories ? (
-                  <Spinner />
-                ) : (
-                  <VStack spacing={3}>
-                    {memories.map((m) => (
-                      <Box key={m.id} p={3} borderWidth="1px" borderRadius="md">
-                        <Text fontWeight="bold">Day {m.dayNumber}</Text>
-                        <Text>{m.suggestion}</Text>
-                        <br />
-                        {/* <Text fontSize="sm" fontWeight={"bolder"}>
-                          Meals
-                        </Text>
-                        <Text fontSize="sm">{m.recipes.join(", ")} </Text>
-                        <br /> */}
-                        {m.timestamp?.toDate && (
-                          <Text fontSize="sm" color="gray.500">
-                            {m.timestamp.toDate().toLocaleString()}
-                          </Text>
-                        )}
-                      </Box>
-                    ))}
-                  </VStack>
-                )}
-              </ModalBody>
-              <ModalFooter>
-                <Button colorScheme="blue" onClick={onMemClose}>
-                  Close
                 </Button>
               </ModalFooter>
             </ModalContent>
