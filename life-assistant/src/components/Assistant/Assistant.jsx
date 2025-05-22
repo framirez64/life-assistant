@@ -10,6 +10,8 @@ import {
   CardBody,
   Spinner,
   Select,
+  VStack,
+  HStack,
 } from "@chakra-ui/react";
 import { getGenerativeModel } from "@firebase/vertexai";
 import { vertexAI, Schema, database } from "../../firebaseResources/config";
@@ -22,6 +24,10 @@ import {
   addDoc,
   serverTimestamp,
 } from "firebase/firestore";
+import EmotionTracker from "../EmotionTracker/EmotionTracker";
+import SleepCycleCalculator from "../SleepCycleCalculator/SleepCycleCalculator";
+import { PlanResult } from "../PlanResult/PlanResult";
+import MealIdeas from "../MealIdeas/MealIdeas";
 
 // JSON schema for daily strategic helper
 const responseSchema = Schema.object({
@@ -68,6 +74,8 @@ export const Assistant = () => {
   const [sleepMinute, setSleepMinute] = useState("00");
   const [sleepAmPm, setSleepAmPm] = useState("PM");
   const [cycles, setCycles] = useState([]);
+
+  const [showEmotionUI, setShowEmotionUI] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -137,6 +145,9 @@ export const Assistant = () => {
   };
 
   const generatePlan = async () => {
+    setShowSleepUI(false);
+    setShowEmotionUI(false);
+    setRecipes([]);
     if (!userDoc) return;
     setLoadingPlan(true);
     setBestSuggestion("");
@@ -146,16 +157,16 @@ export const Assistant = () => {
         .map((m) => `Day ${m.dayNumber}: ${m.suggestion}`)
         .join("\n");
       const prompt = `
-Day ${dayNumber}
-Previous progress:
-${memoryContext}
+    Day ${dayNumber}
+    Previous progress:
+    ${memoryContext}
 
-User Goals: "${userDoc.goals}";
-Responsibilities: "${userDoc.responsibilities}";
-Diet: "${userDoc.diet}";
-Education: "${userDoc.education}".
+    User Goals: "${userDoc.goals}";
+    Responsibilities: "${userDoc.responsibilities}";
+    Diet: "${userDoc.diet}";
+    Education: "${userDoc.education}".
 
-Return JSON with a single key "bestSuggestion" (a concise strategic move for Day ${dayNumber}).`;
+    Return JSON with a single key "bestSuggestion" (a concise strategic move for Day ${dayNumber}).`;
       let raw = "";
       const stream = await model.generateContentStream(prompt);
       for await (const chunk of stream.stream) {
@@ -187,16 +198,19 @@ Return JSON with a single key "bestSuggestion" (a concise strategic move for Day
   };
 
   const generateMeals = async () => {
+    setShowSleepUI(false);
+    setShowEmotionUI(false);
+    setBestSuggestion("");
     if (!userDoc) return;
     setLoadingMeals(true);
     setRecipes([]);
     try {
       const prompt = `
-Generate a JSON with a single key "recipes": an array of 5 meal ideas. Each item should include:
-- name
-- description
-- ingredients
-- nutritionalAnalysis (vitamin, macro, health gains, and how it helps health).`;
+    Generate a JSON with a single key "recipes": an array of 5 meal ideas. Each item should include:
+    - name
+    - description
+    - ingredients
+    - nutritionalAnalysis (vitamin, macro, health gains, and how it helps health).`;
       let raw = "";
       const stream = await model.generateContentStream(prompt);
       for await (const chunk of stream.stream) {
@@ -221,138 +235,66 @@ Generate a JSON with a single key "recipes": an array of 5 meal ideas. Each item
   return (
     <Box p={4} maxW="600px" mx="auto" mt={24}>
       <Heading mb={4}>Personal Assistant (Day {memories.length + 1})</Heading>
-      <Stack direction="row" spacing={4} mb={6}>
-        <Button onClick={generatePlan} isLoading={loadingPlan}>
+      <HStack flexWrap="wrap" spacing={2} mb={6}>
+        <Button
+          onClick={generatePlan}
+          isLoading={loadingPlan}
+          p={{ base: 4, md: 8 }}
+        >
           Create Daily Plan
         </Button>
-        <Button onClick={generateMeals} isLoading={loadingMeals}>
+
+        <Button
+          onClick={generateMeals}
+          isLoading={loadingMeals}
+          p={{ base: 4, md: 8 }}
+        >
           Generate Meals
         </Button>
-        <Button onClick={() => setShowSleepUI((v) => !v)}>
-          {showSleepUI ? "Close Sleep Cycles" : "Sleep Cycles"}
-        </Button>
-      </Stack>
 
-      {bestSuggestion && (
-        <Box mb={6} p={4} borderRadius="md">
-          <Heading size="sm" mb={2}>
-            Current Objective
-          </Heading>
-          <Text>{bestSuggestion}</Text>
-        </Box>
-      )}
+        <Button
+          onClick={() => {
+            setShowSleepUI(true);
+            setBestSuggestion("");
+            setShowEmotionUI(false);
+            setRecipes([]);
+          }}
+          p={{ base: 4, md: 8 }}
+        >
+          Sleep Cycles
+        </Button>
+
+        <Button
+          onClick={() => {
+            setShowEmotionUI(true);
+            setBestSuggestion("");
+            setShowSleepUI(false);
+            setRecipes([]);
+          }}
+          p={{ base: 4, md: 8 }}
+        >
+          Emotion Tracker
+        </Button>
+      </HStack>
+
+      {showEmotionUI ? <EmotionTracker visible={showEmotionUI} /> : null}
+      {bestSuggestion && <PlanResult bestSuggestion={bestSuggestion} />}
+
       {/* Sleep Cycle UI */}
       {showSleepUI && (
-        <Box mb={6} p={4} borderWidth="1px" borderRadius="md">
-          <Heading size="sm" mb={2}>
-            Sleep Cycle Calculator
-          </Heading>
-          <Text mb={3} fontSize="md" lineHeight="tall">
-            A sleep cycle is a roughly 90‑minute period during which your brain
-            and body progress through different stages of sleep, including light
-            sleep, deep sleep, and REM (dream) sleep. Completing full cycles
-            helps you wake up feeling refreshed, reducing grogginess and
-            improving cognitive performance.
-          </Text>
-          <Text fontSize="md" lineHeight="tall" mb={4}>
-            By timing your bedtime and wake‑up moments to coincide with the end
-            of a sleep cycle, you can optimize rest and alertness. Aim for 4–6
-            cycles per night (6–9 hours total) for most adults to maintain
-            healthy sleep hygiene.
-          </Text>
-
-          <Text fontSize="sm" fontWeight="bold" lineHeight="tall">
-            Plan accordingly! It takes the average person 14 minutes to fall
-            asleep and is included in the cycles below.Typically, people fall
-            asleep between 10-20 minutes. Find what works best for you!
-          </Text>
-          <br />
-          <Stack direction="row" spacing={2} align="center" mb={4}>
-            <Select
-              width="80px"
-              value={sleepHour}
-              onChange={(e) => setSleepHour(e.target.value)}
-            >
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-                <option key={h} value={String(h)}>
-                  {h}
-                </option>
-              ))}
-            </Select>
-            <Select
-              width="80px"
-              value={sleepMinute}
-              onChange={(e) => setSleepMinute(e.target.value)}
-            >
-              {Array.from({ length: 60 }, (_, i) => i)
-                .map((m) => m.toString().padStart(2, "0"))
-                .map((mm) => (
-                  <option key={mm} value={mm}>
-                    {mm}
-                  </option>
-                ))}
-            </Select>
-            <Select
-              width="90px"
-              value={sleepAmPm}
-              onChange={(e) => setSleepAmPm(e.target.value)}
-            >
-              <option value="AM">AM</option>
-              <option value="PM">PM</option>
-            </Select>
-            <Button onClick={handleSleepNow}>Sleep now</Button>
-          </Stack>
-          {cycles.length > 0 && (
-            <Box mt={6}>
-              {cycles.map((time, idx) => {
-                // Calculate color shade: 300, 500, 700
-                const shade = 100 + (idx % 3) * 100;
-                const color = idx < 3 ? `purple.${shade}` : `green.${shade}`;
-                return (
-                  <Box
-                    key={idx}
-                    mb={4}
-                    borderLeft="4px solid"
-                    borderColor={color}
-                    pl={3}
-                  >
-                    <Text fontSize="md" fontWeight="bold" color={color}>
-                      Cycle {idx + 1}
-                    </Text>
-                    <Text fontSize="sm">{time}</Text>
-                  </Box>
-                );
-              })}
-            </Box>
-          )}
-        </Box>
+        <SleepCycleCalculator
+          sleepHour={sleepHour}
+          sleepMinute={sleepMinute}
+          sleepAmPm={sleepAmPm}
+          setSleepHour={setSleepHour}
+          setSleepMinute={setSleepMinute}
+          setSleepAmPm={setSleepAmPm}
+          handleSleepNow={handleSleepNow}
+          cycles={cycles}
+        />
       )}
 
-      {recipes.length > 0 && (
-        <Box>
-          <Heading size="sm" mb={2}>
-            Meal Ideas
-          </Heading>
-          <Stack spacing={4}>
-            {recipes.map((r, i) => (
-              <Card key={i} borderRadius="lg" boxShadow="md">
-                <CardHeader>
-                  <Heading size="md">{r.name}</Heading>
-                </CardHeader>
-                <CardBody>
-                  <Text>{r.description}</Text>
-                  <br />
-                  <Text fontSize="sm">{r.ingredients}</Text>
-                  <br />
-                  <Text fontSize="sm" border="1px solid teal" p={6}>
-                    {r.nutritionalAnalysis}
-                  </Text>
-                </CardBody>
-              </Card>
-            ))}
-          </Stack>
-        </Box>
-      )}
+      {recipes.length > 0 && <MealIdeas recipes={recipes} />}
     </Box>
   );
 };
