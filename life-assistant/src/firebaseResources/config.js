@@ -4,13 +4,13 @@ import { getFirestore } from "firebase/firestore";
 import { getVertexAI, Schema } from "@firebase/vertexai";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_PUBLIC_API_KEY,
-  authDomain: "datachecking-7997c.firebaseapp.com",
-  projectId: "datachecking-7997c",
-  storageBucket: "datachecking-7997c.firebasestorage.app",
-  messagingSenderId: "931996417182",
-  appId: "1:931996417182:web:ed3228abafceec5efa4f8f",
-  measurementId: "G-B5B19Z9B5N",
+  apiKey: "AIzaSyAWSO4UNbYjm0-ENCv2IIsGf4qNygGDsCo",
+  authDomain: "frankai-ebb54.firebaseapp.com",
+  projectId: "frankai-ebb54",
+  storageBucket: "frankai-ebb54.firebasestorage.app",
+  messagingSenderId: "353311236660",
+  appId: "1:353311236660:web:682d1d3d74fd1fdd636061",
+  measurementId: "G-6PXDMMLJKN"
 };
 
 export const app = initializeApp(firebaseConfig);
